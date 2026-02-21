@@ -66,7 +66,7 @@ Place your CSV files in the `./data` directory with the naming convention:
 Then run the import script:
 
 ```bash
-tsx import-csv.ts
+npx ts-node import-csv.ts
 ```
 
 ### 6. Start the server
