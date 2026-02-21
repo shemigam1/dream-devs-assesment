@@ -1,0 +1,47 @@
+{
+  "name": "dream-devs-assesment",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/main.ts",
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "dev": "nodemon --exec tsx src/main.ts",
+    "migrate": "npx prisma migrate dev",
+    "setup": "npm install && npx prisma generate && npx prisma migrate dev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shemigam1/dream-devs-assesment.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/shemigam1/dream-devs-assesment/issues"
+  },
+  "homepage": "https://github.com/shemigam1/dream-devs-assesment#readme",
+  "devDependencies": {
+    "@types/node": "^25.0.2",
+    "@types/pg": "^8.16.0",
+    "nodemon": "^3.1.11",
+    "prisma": "^7.4.1",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.1.0",
+    "@prisma/client": "^7.4.1",
+    "@types/bcrypt": "^6.0.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "cors": "^2.8.5",
+    "csv-parser": "^3.2.0",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "joi": "^18.0.2",
+    "pg": "^8.16.3",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "tsx": "^4.21.0"
+  }
+}

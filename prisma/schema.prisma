@@ -1,0 +1,69 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model MerchantActivity {
+  id               String   @id @default(uuid()) @db.Uuid
+  eventId          String   @unique @db.Uuid
+  merchantId       String   @db.VarChar(20)
+  eventTimestamp   DateTime 
+  product          Product
+  eventType        String   @db.VarChar(50)
+  amount           Decimal  @default(0) @db.Decimal(15, 2)
+  status           Status
+  channel          Channel
+  region           String   @db.VarChar(100)
+  merchantTier     Tier     
+  createdAt        DateTime @default(now()) 
+
+  @@index([merchantId])
+  @@index([product])
+  @@index([status])
+  @@index([eventTimestamp])
+  @@index([merchantId, status])
+  @@index([product, status])
+  @@index([eventTimestamp, status])
+
+  @@map("merchant_activities")
+}
+
+enum Product {
+  POS
+  AIRTIME
+  BILLS
+  CARD_PAYMENT
+  SAVINGS
+  MONIEBOOK
+  KYC
+}
+
+enum Status {
+  SUCCESS
+  FAILED
+  PENDING
+}
+
+enum Channel {
+  POS
+  APP
+  USSD
+  WEB
+  OFFLINE
+}
+
+enum Tier {
+  STARTER
+  VERIFIED
+  PREMIUM
+}
