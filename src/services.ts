@@ -7,28 +7,33 @@ class MerchantActivityService {
         // GET /analytics/top-merchant
         // Returns the merchant with the highest total successful transaction amount across ALL products.
         // Response:{"merchant_id": "MRC-001234", "total_volume": 98765432.10} 
-        const result = await prisma.merchantActivity.groupBy({
-            by: ["merchantId"],
-            where: {
-                status: Status.SUCCESS,
-            },
-            _sum: {
-                amount: true,
-            },
-            orderBy: {
-                _sum: {
-                    amount: "desc",
+        try {
+            const result = await prisma.merchantActivity.groupBy({
+                by: ["merchantId"],
+                where: {
+                    status: Status.SUCCESS,
                 },
-            },
-            take: 1,
-        });
+                _sum: {
+                    amount: true,
+                },
+                orderBy: {
+                    _sum: {
+                        amount: "desc",
+                    },
+                },
+                take: 1,
+            });
 
-        if (!result.length) return null;
+            if (!result.length) return null;
 
-        return {
-            merchant_id: result[0].merchantId,
-            total_volume: parseFloat(result[0]._sum.amount?.toString() ?? "0"),
-        };
+            return {
+                merchant_id: result[0].merchantId,
+                total_volume: Number(parseFloat(result[0]._sum.amount?.toString() ?? "0").toFixed(2)),
+            };
+        } catch (error) {
+            console.error("getTopMerchant error:", error);
+            return null;
+        }
 
 
     }
@@ -59,21 +64,18 @@ class MerchantActivityService {
     public async getProductAdoption() {
         // Returns unique merchant count per product (sorted by count, highest first).
         // Response:{"POS": 15234, "AIRTIME": 12456, "BILLS": 10234, ...}
-        const result = await prisma.merchantActivity.groupBy({
-            by: ["product"],
-            _count: {
-                merchantId: true,
-            },
-            orderBy: {
-                _count: {
-                    merchantId: "desc",
-                },
-            },
-        });
+        const result = await prisma.$queryRaw<{ product: string; count: bigint }[]>`
+            SELECT
+                product,
+                COUNT(DISTINCT "merchantId") AS count
+            FROM merchant_activities
+            GROUP BY product
+            ORDER BY count DESC
+        `;
 
         return result.reduce(
             (acc, row) => {
-                acc[row.product] = row._count.merchantId;
+                acc[row.product] = Number(row.count);
                 return acc;
             },
             {} as Record<string, number>
@@ -82,17 +84,15 @@ class MerchantActivityService {
 
     public async getKycFunnel() {
         // Returns the KYC conversion funnel (unique merchants at each stage, successful events only).
-        // Response:{"documents_submitted": 5432, "verifications_completed": 4521, "tier_upgrades": 3890} 
-        const result = await prisma.merchantActivity.groupBy({
-            by: ["eventType"],
-            where: {
-                product: Product.KYC,
-                status: Status.SUCCESS,
-            },
-            _count: {
-                merchantId: true,
-            },
-        });
+        // Response:{"documents_submitted": 5432, "verifications_completed": 4521, "tier_upgrades": 3890}
+        const result = await prisma.$queryRaw<{ event_type: string; count: bigint }[]>`
+            SELECT
+                "eventType" AS event_type,
+                COUNT(DISTINCT "merchantId") AS count
+            FROM merchant_activities
+            WHERE product = 'KYC' AND status = 'SUCCESS'
+            GROUP BY "eventType"
+        `;
 
         const funnel = {
             documents_submitted: 0,
@@ -107,9 +107,9 @@ class MerchantActivityService {
         };
 
         for (const row of result) {
-            const key = eventTypeMap[row.eventType];
+            const key = eventTypeMap[row.event_type];
             if (key) {
-                funnel[key] = row._count.merchantId;
+                funnel[key] = Number(row.count);
             }
         }
 
@@ -149,7 +149,7 @@ class MerchantActivityService {
             const rate = total > 0 ? (counts.failed / total) * 100 : 0;
             return {
                 product,
-                failure_rate: parseFloat(rate.toFixed(2)),
+                failure_rate: parseFloat(rate.toFixed(1)),
             };
         });
 
